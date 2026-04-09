@@ -25,8 +25,26 @@ steps:
     projects: '**/*.csproj'
     arguments: '--configuration $(buildConfiguration)'
 
+# Publish ProductService
 - task: DotNetCoreCLI@2
+  displayName: 'Publish ProductService'
   inputs:
     command: 'publish'
-    projects: '**/ProductService.csproj'
-    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+    projects: 'ProductService/ProductService.csproj'
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/ProductService'
+
+# Publish OrderService
+- task: DotNetCoreCLI@2
+  displayName: 'Publish OrderService'
+  inputs:
+    command: 'publish'
+    projects: 'OrderService/OrderService.csproj'
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/OrderService'
+
+# Publish IdentityService
+- task: DotNetCoreCLI@2
+  displayName: 'Publish IdentityService'
+  inputs:
+    command: 'publish'
+    projects: 'IdentityService/IdentityService.csproj'
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/IdentityService'
