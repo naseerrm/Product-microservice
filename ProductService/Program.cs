@@ -21,8 +21,18 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ProductReadRepository>();
 builder.Services.AddScoped<RedisCacheService>();
 
-builder.Services.AddSingleton<IConnectionMultiplexer>(
-    ConnectionMultiplexer.Connect("localhost:6379"));
+var redisConfig = builder.Configuration.GetSection("Redis");
+
+var redisOptions = new ConfigurationOptions
+{
+    EndPoints = { { redisConfig["Host"], int.Parse(redisConfig["Port"]) } },
+    User = redisConfig["User"],
+    Password = redisConfig["Password"],
+    Ssl = true
+};
+
+//builder.Services.AddSingleton<IConnectionMultiplexer>(
+//    ConnectionMultiplexer.Connect("localhost:6379"));
 // Add services to the container.
 builder.Services.AddControllers();
 
