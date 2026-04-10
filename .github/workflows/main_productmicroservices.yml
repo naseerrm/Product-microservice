@@ -1,0 +1,65 @@
+name: Build and deploy ASP.Net Core app to Azure Web App - productmicroservices
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'   # ✅ FIXED
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish ./ProductService/ProductService.csproj -c Release -o ./publish   # ✅ FIXED (adjust path if needed)
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: ./publish   # ✅ clean path
+
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app
+          path: ./publish   # ✅ must match upload
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_3E8AC5A2FAE24023B53226D0A28399A0 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_984B78362EF147599F11ED3608AC64CF }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_9B30914272C44B76B8E7155C0158C71A }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'productmicroservices'
+          slot-name: 'Production'
+          package: ./publish   # ✅ FIXED (this was your main issue)
