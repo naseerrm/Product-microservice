@@ -1,5 +1,4 @@
-﻿using MediatR;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using ProductService.Domain.Interfaces;
 using ProductService.Features.Product.Endpoints;
 using ProductService.Infrastructure.Caching;
@@ -21,18 +20,35 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ProductReadRepository>();
 builder.Services.AddScoped<RedisCacheService>();
 
+// Add first-level in-memory cache
+builder.Services.AddMemoryCache();
+
 var redisConfig = builder.Configuration.GetSection("Redis");
 
-var redisOptions = new ConfigurationOptions
-{
-    EndPoints = { { redisConfig["Host"], int.Parse(redisConfig["Port"]) } },
-    User = redisConfig["User"],
-    Password = redisConfig["Password"],
-    Ssl = true
-};
+var host = redisConfig["Host"];
+var port = redisConfig["Port"];
+var user = redisConfig["User"];
+var password = redisConfig["Password"];
+var ssl = redisConfig["Ssl"];
 
-//builder.Services.AddSingleton<IConnectionMultiplexer>(
-//    ConnectionMultiplexer.Connect("localhost:6379"));
+var connectionString =
+    $"{host}:{port}," +
+    $"user={user}," +
+    $"password={password}," +
+    $"ssl={ssl}," +
+    "abortConnect=False";
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var mux = ConnectionMultiplexer.Connect(connectionString);
+
+    Console.WriteLine(mux.IsConnected
+        ? "✅ Redis Connected"
+        : "❌ Redis Failed");
+
+    return mux;
+});
+
 // Add services to the container.
 builder.Services.AddControllers();
 
